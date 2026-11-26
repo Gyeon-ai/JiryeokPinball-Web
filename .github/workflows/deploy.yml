@@ -1,0 +1,67 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 사원 얼굴 그림은 저장소에 암호화(.png.enc)로만 있다. 비밀 값으로 풀고, 없거나 틀리면 여기서 멈춘다.
+      # 비밀 값은 GitHub가 로그에서 가린다. 스크립트도 값을 출력하지 않는다.
+      - name: Decrypt face pictures
+        env:
+          FACE_KEY: ${{ secrets.FACE_KEY }}
+        run: node scripts/decrypt-faces.mjs
+
+      - name: Run tests and type check
+        run: |
+          node --import ./scripts/register-typescript.mjs --test tests/*.test.mjs
+          pnpm exec tsc --noEmit --incremental false
+      - name: Build site
+        run: pnpm build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

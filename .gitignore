@@ -1,0 +1,17 @@
+.idea
+node_modules
+.parcel-cache
+dist
+yarn-error.log
+dist-custom
+dist-preview
+src/custom/
+src/custom.ts
+src/preview.ts
+custom.html
+preview.html
+scripts/build-custom.sh
+
+# 사원 얼굴 그림 원본은 저장소에 올리지 않는다(허락받아 이 사이트에서만 씀, MIT 아님, 재배포 금지).
+# 암호화된 assets/faces/*.png.enc 만 올리고, 빌드 때 scripts/decrypt-faces.mjs가 FACE_KEY로 푼다(2026-11-27).
+assets/faces/*.png
